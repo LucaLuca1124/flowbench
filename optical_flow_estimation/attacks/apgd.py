@@ -10,17 +10,17 @@ def apgd(
     model: BaseModel,
     targeted_inputs: Optional[Dict[str, torch.Tensor]],
 ):
-    norm = attack_args["attack_norm"]
+    norm = attack_args["norm"]
     if norm == "inf":
         norm = "Linf"
     elif norm == "two":
         norm = "L2"
 
-    if attack_args["attack_targeted"]:
+    if attack_args["targeted"]:
         attack = APGD(
             model,
-            eps=attack_args["attack_epsilon"],
-            loss=attack_args["attack_loss"],
+            eps=attack_args["epsilon"],
+            loss=attack_args["loss"],
             verbose=False,
             steps=attack_args["apgd_steps"],
             n_restarts=attack_args["apgd_n_restarts"],
@@ -34,8 +34,8 @@ def apgd(
     else:
         attack = APGD(
             model,
-            eps=attack_args["attack_epsilon"],
-            loss=attack_args["attack_loss"],
+            eps=attack_args["epsilon"],
+            loss=attack_args["loss"],
             verbose=False,
             steps=attack_args["apgd_steps"],
             n_restarts=attack_args["apgd_n_restarts"],

@@ -19,14 +19,14 @@ def fgsm(
     model: BaseModel,
     targeted_inputs: Optional[Dict[str, torch.Tensor]],
 ):
-    criterion = LossCriterion(attack_args["attack_loss"])
+    criterion = LossCriterion(attack_args["loss"])
     # import pdb
 
     # pdb.set_trace()
     orig_image_1 = inputs["images"][0][0].clone().unsqueeze(0)
     orig_image_2 = inputs["images"][0][1].clone().unsqueeze(0)
 
-    if attack_args["attack_targeted"]:
+    if attack_args["targeted"]:
         labels = targeted_inputs["flows"].clone().squeeze(0)
     else:
         labels = inputs["flows"].clone().squeeze(0)
@@ -61,26 +61,26 @@ def fgsm_attack(
     # Collect the element-wise sign of the data gradient
     sign_data_grad = data_grad.sign()
     # Create the perturbed image by adjusting each pixel of the input imag
-    if attack_args["attack_targeted"]:
+    if attack_args["targeted"]:
         sign_data_grad *= -1
     # import pdb
 
     # pdb.set_trace()
-    if attack_args["attack_norm"] == "two":
+    if attack_args["norm"] == "two":
         sign_data_grad = attack_functions.lp_normalize(
             sign_data_grad, p=2, epsilon=1.0, decrease_only=False
         )
     perturbed_image = (
-        perturbed_image.detach() + attack_args["attack_epsilon"] * sign_data_grad
+        perturbed_image.detach() + attack_args["epsilon"] * sign_data_grad
     )
     # Adding clipping to maintain [0,1] range
-    if attack_args["attack_norm"] == "inf":
+    if attack_args["norm"] == "inf":
         delta = torch.clamp(
             perturbed_image - orig_image,
-            min=-1 * attack_args["attack_epsilon"],
-            max=attack_args["attack_epsilon"],
+            min=-1 * attack_args["epsilon"],
+            max=attack_args["epsilon"],
         )
-    elif attack_args["attack_norm"] == "two":
+    elif attack_args["norm"] == "two":
         # delta = perturbed_image - orig_image
         # delta_norms = torch.norm(delta.view(batch_size, -1), p=2, dim=1)
         # factor = attack_args["attack_epsilon"] / delta_norms
@@ -90,7 +90,7 @@ def fgsm_attack(
         delta = attack_functions.lp_normalize(
             noise=perturbed_image - orig_image,
             p=2,
-            epsilon=attack_args["attack_epsilon"],
+            epsilon=attack_args["epsilon"],
             decrease_only=True,
         )
         # Adding clipping to maintain [0,1] range

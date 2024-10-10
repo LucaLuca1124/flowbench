@@ -3,31 +3,31 @@ from typing import Dict
 
 fgsm_arguments = [
     "attack",
-    "attack_norm",
-    "attack_epsilon",
-    "attack_targeted",
-    "attack_target",
-    "attack_loss",
-    "attack_optim_target",
+    "norm",
+    "epsilon",
+    "targeted",
+    "target",
+    "loss",
+    "optim_target",
 ]
 bim_pgd_cospgd_arguments = [
     "attack",
-    "attack_norm",
-    "attack_epsilon",
-    "attack_alpha",
-    "attack_targeted",
-    "attack_target",
-    "attack_loss",
-    "attack_iterations",
-    "attack_optim_target",
+    "norm",
+    "epsilon",
+    "alpha",
+    "targeted",
+    "target",
+    "loss",
+    "iterations",
+    "optim",
 ]
 apgd_arguments = [
     "attack",
-    "attack_norm",
-    "attack_epsilon",
-    "attack_targeted",
-    "attack_target",
-    "attack_loss",
+    "norm",
+    "epsilon",
+    "targeted",
+    "target",
+    "loss",
     "apgd_rho",
     "apgd_n_restarts",
     "apgd_eot_iter",
@@ -36,29 +36,29 @@ apgd_arguments = [
 ]
 pcfa_arguments = [
     "attack",
-    "attack_targeted",
-    "attack_target",
-    "attack_loss",
-    "attack_epsilon",
-    "attack_alpha",
-    "attack_iterations",
+    "targeted",
+    "target",
+    "loss",
+    "epsilon",
+    "alpha",
+    "iterations",
     "pcfa_boxconstraint",
 ]
 tdcc_arguments = [
     "attack",
     "3dcc_corruption",
     "3dcc_intensity",
-    "attack_targeted",
+    "targeted",
 ]
 cc_arguments = [
     "attack",
-    "attack_targeted",
+    "targeted",
     "cc_name",
     "cc_severity",
 ]
-no_attack_arguments = ["attack", "attack_targeted"]
-targeted_arguments = ["attack_target"]
-untargeted_arguments = ["attack_optim_target"]
+no_attack_arguments = ["attack", "targeted"]
+targeted_arguments = ["target"]
+untargeted_arguments = ["optim"]
 
 
 class AttackArgumentParser:
@@ -130,7 +130,7 @@ class AttackArgumentParser:
         for i in range(0, len(self.argument_lists)):
             entry = self.argument_lists[i]
             attack = entry["attack"]
-            targeted = entry["attack_targeted"]
+            targeted = entry["targeted"]
             to_remove = dict(entry)
 
             match attack:  # Commit adversarial attack
@@ -169,20 +169,20 @@ class AttackArgumentParser:
                     for arg_name in entry.keys():
                         if arg_name not in tdcc_arguments:
                             del to_remove[arg_name]
-                        elif arg_name == "attack_targeted":
-                            to_remove["attack_targeted"] = False
+                        elif arg_name == "targeted":
+                            to_remove["targeted"] = False
                 case "common_corruptions":
                     for arg_name in entry.keys():
                         if arg_name not in cc_arguments:
                             del to_remove[arg_name]
-                        elif arg_name == "attack_targeted":
-                            to_remove["attack_targeted"] = False
+                        elif arg_name == "targeted":
+                            to_remove["targeted"] = False
                 case "none":
                     for arg_name in entry.keys():
                         if arg_name not in no_attack_arguments:
                             del to_remove[arg_name]
-                        elif arg_name == "attack_targeted":
-                            to_remove["attack_targeted"] = False
+                        elif arg_name == "targeted":
+                            to_remove["targeted"] = False
             self.argument_lists[i] = to_remove
 
         indexes_to_remove = set()
@@ -208,11 +208,11 @@ class AttackArgumentParser:
             if not self.argument_lists[i]["attack"] == "pcfa":
                 continue
             else:
-                if not self.argument_lists[i]["attack_targeted"]:
+                if not self.argument_lists[i]["targeted"]:
                     pcfa_untargeted_indices.append(i)
                 else:
                     pcfa_targeted_flag = (
-                        pcfa_targeted_flag or self.argument_lists[i]["attack_targeted"]
+                        pcfa_targeted_flag or self.argument_lists[i]["targeted"]
                     )
         if pcfa_targeted_flag and len(pcfa_untargeted_indices) > 0:
             new_argument_list = []

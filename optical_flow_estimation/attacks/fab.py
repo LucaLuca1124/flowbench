@@ -10,8 +10,8 @@ def fab(
     model: BaseModel,
     targeted_inputs: Optional[Dict[str, torch.Tensor]],
 ):
-    attack = FAB(model, attack_args["attack_epsilon"])
-    if attack_args["attack_targeted"]:
+    attack = FAB(model, attack_args["epsilon"])
+    if attack_args["targeted"]:
         attack.targeted = True
         attack.set_mode_targeted_by_label()
         perturbed_inputs = attack(inputs["images"], targeted_inputs["flows"])

@@ -134,7 +134,7 @@ def _init_parser() -> ArgumentParser:
         help="Name of the attack to use.",
     )
     parser.add_argument(
-        "--attack_optim_target",
+        "--optim_target",
         type=str,
         default="ground_truth",
         nargs="*",
@@ -174,7 +174,7 @@ def _init_parser() -> ArgumentParser:
         help="Severity of the common corruption to use on the input images.",
     )
     parser.add_argument(
-        "--attack_norm",
+        "--norm",
         type=str,
         default=norm,
         nargs="*",
@@ -182,7 +182,7 @@ def _init_parser() -> ArgumentParser:
         help="Set norm to use for adversarial attack.",
     )
     parser.add_argument(
-        "--attack_epsilon",
+        "--epsilon",
         type=parse_fraction,
         default=epsilon,
         nargs="*",
@@ -231,27 +231,27 @@ def _init_parser() -> ArgumentParser:
         help="number of steps. (Default: 10)",
     )
     parser.add_argument(
-        "--attack_iterations",
+        "--iterations",
         type=int,
         default=iterations,
         nargs="*",
         help="Set number of iterations for adversarial attack.",
     )
     parser.add_argument(
-        "--attack_alpha",
+        "--alpha",
         type=float,
         default=alpha,
         help="Set alpha to use for adversarial attack.",
     )
     parser.add_argument(
-        "--attack_targeted",
+        "--targeted",
         type=attack_targeted_string,
         default=targeted,
         nargs="*",
         help="Set if adversarial attack should be targeted.",
     )
     parser.add_argument(
-        "--attack_target",
+        "--target",
         type=str,
         default="zero",
         nargs="*",
@@ -259,7 +259,7 @@ def _init_parser() -> ArgumentParser:
         help="Set the target for a tagreted attack.",
     )
     parser.add_argument(
-        "--attack_loss",
+        "--loss",
         type=str,
         default="epe",
         nargs="*",
@@ -635,8 +635,8 @@ def attack_one_dataloader(
             inputs["prev_preds"] = prev_preds
 
             if inputs["images"].max() > 1.0:
-                attack_args["attack_epsilon"] = attack_args["attack_epsilon"] * 255
-                attack_args["attack_alpha"] = attack_args["attack_alpha"] * 255
+                attack_args["epsilon"] = attack_args["epsilon"] * 255
+                attack_args["alpha"] = attack_args["alpha"] * 255
             has_ground_truth = True
             targeted_inputs = None
 
@@ -644,8 +644,8 @@ def attack_one_dataloader(
                 orig_preds = model(inputs)
             torch.cuda.empty_cache()
 
-            if attack_args["attack_targeted"] or attack_args["attack"] == "pcfa":
-                if attack_args["attack_target"] == "negative":
+            if attack_args["targeted"] or attack_args["attack"] == "pcfa":
+                if attack_args["target"] == "negative":
                     targeted_flow_tensor = -orig_preds["flows"]
                 else:
                     targeted_flow_tensor = torch.zeros_like(orig_preds["flows"])
@@ -727,7 +727,7 @@ def attack_one_dataloader(
 
             if attack_args["attack"] != "none":
                 perturbed_inputs = io_adapter.unscale(perturbed_inputs, image_only=True)
-                if attack_args["attack_targeted"] or attack_args["attack"] == "pcfa":
+                if attack_args["targeted"] or attack_args["attack"] == "pcfa":
                     targeted_inputs = io_adapter.unscale(
                         targeted_inputs, image_only=True
                     )
@@ -749,7 +749,7 @@ def attack_one_dataloader(
                     elif isinstance(val, torch.Tensor) and len(val.shape) == 5:
                         inputs[key] = val[:, k : k + 1]
 
-            if attack_args["attack_targeted"] or attack_args["attack"] == "pcfa":
+            if attack_args["targeted"] or attack_args["attack"] == "pcfa":
 
                 metrics = model.val_metrics(preds, targeted_inputs)
 
@@ -1175,14 +1175,15 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
         list_of_parameters.append("--write_outputs")
 
     # Add additional args from dictionary
-    # TODO: remove attack_ from all the args of the parser and from the attack_args_parser.py
+    # TODO: remove attack_ from all the args of the parser and from the attack_args_parser.py. 
+    # TODO: Then adjust argument calls in all attack scripts accordingly
     if additional_args:
         for key, value in additional_args.items():
             if key in ["epsilon", "alpha", "lp_norm", "iterations"]:
                 if key == "lp_norm":
-                    list_of_parameters.append(f"--attack_norm={value}")
+                    list_of_parameters.append(f"--norm={value}")
                 else:
-                    list_of_parameters.append(f"--attack_{key}={value}")
+                    list_of_parameters.append(f"--key={value}")
             else:
                 list_of_parameters.append(f"--{key}={value}")
 
@@ -1237,6 +1238,8 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
 # TODO:
 def retrieve_data(args):
     attack_args_parser = AttackArgumentParser(args)
+
+    # TODO: this part is only needed until argument names no longer look like attack_...
     modified_attack_args = {}
     for attack_args in attack_args_parser:
         for key, value in attack_args.items():
@@ -1247,6 +1250,8 @@ def retrieve_data(args):
             modified_attack_args[key] = value
     print("Retrieving data for:")
     print(modified_attack_args)
+
+    df = pd.read_csv("benchmark.csv")
 
     return None
 

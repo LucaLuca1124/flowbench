@@ -23,17 +23,17 @@ def pcfa(
     Performs an PCFA attack on a given model and for all images of a specified dataset.
     """
 
-    optim_mu = 2500.0 / attack_args["attack_epsilon"]
+    optim_mu = 2500.0 / attack_args["epsilon"]
 
-    if attack_args["attack_epsilon"] == 0.01:
+    if attack_args["epsilon"] == 0.01:
         optim_mu = 100000
-    elif attack_args["attack_epsilon"] == 0.001:
+    elif attack_args["epsilon"] == 0.001:
         optim_mu = 1000000
 
-    if attack_args["attack_target"] not in ["zero"]:
+    if attack_args["target"] not in ["zero"]:
         optim_mu = 1.5 * optim_mu
 
-    eps_box = attack_args["attack_alpha"]
+    eps_box = attack_args["alpha"]
 
     # Define what device we are using
     if not torch.cuda.is_available():
@@ -126,7 +126,7 @@ def pcfa_attack(model, targeted_inputs, inputs, eps_box, device, optim_mu, attac
     model.zero_grad()
     optimizer.zero_grad()
 
-    for steps in range(attack_args["attack_iterations"]):
+    for steps in range(attack_args["iterations"]):
         # Calculate the deltas from the quantities that go into the network
         delta1, delta2 = extract_deltas(
             nw_input1,
@@ -143,9 +143,9 @@ def pcfa_attack(model, targeted_inputs, inputs, eps_box, device, optim_mu, attac
             delta1,
             delta2,
             device,
-            delta_bound=attack_args["attack_epsilon"],
+            delta_bound=attack_args["epsilon"],
             mu=optim_mu,
-            f_type=attack_args["attack_loss"],
+            f_type=attack_args["loss"],
         )
         # Update the optimization parameters
         loss.backward()
@@ -172,9 +172,9 @@ def pcfa_attack(model, targeted_inputs, inputs, eps_box, device, optim_mu, attac
                 delta1_closure,
                 delta2_closure,
                 device,
-                delta_bound=attack_args["attack_epsilon"],
+                delta_bound=attack_args["epsilon"],
                 mu=optim_mu,
-                f_type=attack_args["attack_loss"],
+                f_type=attack_args["loss"],
             )
             loss_closure.backward()
 
