@@ -1234,12 +1234,9 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
     # Run the attack on the specific model
     attack(args, model)
 
-
-# TODO:
 def retrieve_data(args):
     attack_args_parser = AttackArgumentParser(args)
 
-    # TODO: this part is only needed until argument names no longer look like attack_...
     modified_attack_args = {}
     for attack_args in attack_args_parser:
         for key, value in attack_args.items():
@@ -1252,6 +1249,8 @@ def retrieve_data(args):
     print(modified_attack_args)
 
     df = pd.read_csv("benchmark.csv")
+
+    # TODO: return data for the specific attack arguments
 
     return None
 
