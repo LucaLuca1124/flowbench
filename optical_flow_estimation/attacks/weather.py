@@ -3,7 +3,8 @@ import os
 import time
 from typing import Dict, List
 
-from ptlflow.ptlflow.models.base_model.base_model import BaseModel
+from ptlflow.models.base_model.base_model import BaseModel
+# from ptlflow.ptlflow.models.base_model.base_model import BaseModel
 # from ptlflow_attacked.ptlflow.models.base_model.base_model import BaseModel
 from attacks.attack_utils.utils import (
     get_image_tensors,
