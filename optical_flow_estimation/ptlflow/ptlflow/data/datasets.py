@@ -1619,6 +1619,8 @@ class SintelDataset(BaseFlowDataset):
                 image_paths = sorted(
                     (Path(self.root_dir) / split_dir / passd / seq_name).glob("*.png")
                 )
+                if split == "tr115":
+                    image_paths = image_paths[:6]
                 image_paths = self._extend_paths_list(
                     image_paths, sequence_length, sequence_position
                 )
@@ -1633,6 +1635,8 @@ class SintelDataset(BaseFlowDataset):
                             "*.flo"
                         )
                     )
+                    if split == "tr115":
+                        flow_paths = flow_paths[:5]
                     flow_paths = self._extend_paths_list(
                         flow_paths, sequence_length, sequence_position
                     )
@@ -1648,6 +1652,8 @@ class SintelDataset(BaseFlowDataset):
                                 / seq_name
                             ).glob("*.png")
                         )
+                        if split == "tr115":
+                            occ_paths = occ_paths[:5]
                         occ_paths = self._extend_paths_list(
                             occ_paths, sequence_length, sequence_position
                         )
