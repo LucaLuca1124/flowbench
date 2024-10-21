@@ -877,7 +877,7 @@ def attack_one_dataloader(
             torch.cuda.empty_cache()
 
             if (
-                attack_args["attack_targeted"]
+                attack_args["targeted"]
                 or attack_args["attack"] == "pcfa"
                 or attack_args["attack"] == "weather"
             ):
