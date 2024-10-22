@@ -41,7 +41,7 @@ def bim_pgd_cospgd(
 
     if attack_args["targeted"]:
         labels = targeted_inputs["flows"].squeeze(0)
-    elif attack_args["optim"] == "ground_truth":
+    elif attack_args["optimization_target"] == "ground_truth":
         labels = inputs["flows"].clone().squeeze(0)
     elif attack_args["optim"] == "initial_flow":
         labels = orig_preds["flows"].clone().squeeze(0)
@@ -53,14 +53,14 @@ def bim_pgd_cospgd(
     orig_image_1, orig_image_2 = get_image_tensors(inputs)
 
     if "pgd" in attack_args["attack"]:
-        if attack_args["norm"] == "inf":
+        if attack_args["lp_norm"] == "inf":
             image_1 = attack_functions.init_linf(
                 image_1, epsilon=attack_args["epsilon"], clamp_min=0, clamp_max=1
             )
             image_2 = attack_functions.init_linf(
                 image_2, epsilon=attack_args["epsilon"], clamp_min=0, clamp_max=1
             )
-        elif attack_args["attack_norm"] == "two":
+        elif attack_args["lp_norm"] == "two":
             image_1 = attack_functions.init_l2(
                 image_1, epsilon=attack_args["epsilon"], clamp_min=0, clamp_max=1
             )
@@ -92,7 +92,7 @@ def bim_pgd_cospgd(
         # pdb.set_trace()
         image_1_adv, image_2_adv = get_image_tensors(perturbed_inputs)
         image_1_grad, image_2_grad = get_image_grads(perturbed_inputs)
-        if attack_args["norm"] == "inf":
+        if attack_args["lp_norm"] == "inf":
             image_1_adv = attack_functions.step_inf(
                 perturbed_image=image_1_adv,
                 epsilon=attack_args["epsilon"],
@@ -115,7 +115,7 @@ def bim_pgd_cospgd(
                 clamp_max=1,
                 grad_scale=None,
             )
-        elif attack_args["norm"] == "two":
+        elif attack_args["lp_norm"] == "two":
             image_1_adv = attack_functions.step_l2(
                 perturbed_image=image_1_adv,
                 epsilon=attack_args["epsilon"],

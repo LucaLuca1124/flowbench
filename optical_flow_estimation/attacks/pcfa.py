@@ -30,7 +30,7 @@ def pcfa(
     elif attack_args["epsilon"] == 0.001:
         optim_mu = 1000000
 
-    if attack_args["target"] not in ["zero"]:
+    if attack_args["attack_target"] not in ["zero"]:
         optim_mu = 1.5 * optim_mu
 
     eps_box = attack_args["alpha"]

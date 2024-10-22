@@ -10,7 +10,7 @@ def apgd(
     model: BaseModel,
     targeted_inputs: Optional[Dict[str, torch.Tensor]],
 ):
-    norm = attack_args["norm"]
+    norm = attack_args["lp_norm"]
     if norm == "inf":
         norm = "Linf"
     elif norm == "two":

@@ -134,7 +134,7 @@ def _init_parser() -> ArgumentParser:
         help="Name of the attack to use.",
     )
     parser.add_argument(
-        "--optim_target",
+        "--optimization_target",
         type=str,
         default="ground_truth",
         nargs="*",
@@ -142,7 +142,7 @@ def _init_parser() -> ArgumentParser:
         help="Set optimization target for adversarial attacks.",
     )
     parser.add_argument(
-        "--cc_name",
+        "--common_corruption_name",
         type=str,
         default="gaussian_noise",
         nargs="*",
@@ -166,7 +166,7 @@ def _init_parser() -> ArgumentParser:
         help="Name of the common corruption to use on the input images.",
     )
     parser.add_argument(
-        "--cc_severity",
+        "--common_corruption_severity",
         type=int,
         default=1,
         nargs="*",
@@ -174,7 +174,7 @@ def _init_parser() -> ArgumentParser:
         help="Severity of the common corruption to use on the input images.",
     )
     parser.add_argument(
-        "--norm",
+        "--lp_norm",
         type=str,
         default=norm,
         nargs="*",
@@ -251,7 +251,7 @@ def _init_parser() -> ArgumentParser:
         help="Set if adversarial attack should be targeted.",
     )
     parser.add_argument(
-        "--target",
+        "--attack_target",
         type=str,
         default="zero",
         nargs="*",
@@ -266,7 +266,7 @@ def _init_parser() -> ArgumentParser:
         help="Set the name of the used loss function (mse, epe)",
     )
     parser.add_argument(
-        "--3dcc_intensity",
+        "--3d_common_corruption_severity",
         type=int,
         choices=[1, 2, 3, 4, 5],
         default=3,
@@ -274,7 +274,7 @@ def _init_parser() -> ArgumentParser:
         help="Set the the intensity of the 3DCC corruption, int between 1 and 5",
     )
     parser.add_argument(
-        "--3dcc_corruption",
+        "--3d_common_corruption_name",
         type=str,
         default="far_focus",
         nargs="*",
@@ -440,8 +440,8 @@ def attack(args: Namespace, model: BaseModel) -> pd.DataFrame:
 
     for attack_args in attack_args_parser:
         for key, value in attack_args.items():
-            if "_" in key:
-                key = key.split("_")[1]
+            # if "_" in key:
+            #     key = key.split("_")[1]
             if isinstance(value, float):
                 value = round(value, 4)
             output_data.append((key, value))
@@ -516,63 +516,6 @@ def attack(args: Namespace, model: BaseModel) -> pd.DataFrame:
                     json.dump(metrics, json_file, indent=4)
 
 
-def attack_list_of_models(args: Namespace) -> None:
-    """Perform the validation.
-
-    Parameters
-    ----------
-    args : Namespace
-        Arguments to configure the list of models and the validation.
-    """
-    metrics_df = pd.DataFrame()
-
-    model_names = _get_model_names(args)
-    if args.reversed:
-        model_names = reversed(model_names)
-
-    exclude = args.exclude
-    if exclude is None:
-        exclude = []
-    for mname in model_names:
-        if mname in exclude:
-            continue
-
-        logging.info(mname)
-        model_ref = get_model_reference(mname)
-
-        if hasattr(model_ref, "pretrained_checkpoints"):
-            ckpt_names = model_ref.pretrained_checkpoints.keys()
-            for cname in ckpt_names:
-                try:
-                    logging.info(cname)
-                    parser_tmp = model_ref.add_model_specific_args(parser)
-                    args = parser_tmp.parse_args()
-
-                    args.model = mname
-                    args.pretrained_ckpt = cname
-
-                    model_id = args.model
-                    if args.pretrained_ckpt is not None:
-                        model_id += f"_{args.pretrained_ckpt}"
-                    args.output_path = Path(args.output_path) / model_id
-
-                    model = get_model(mname, cname, args)
-                    instance_metrics_df = attack(args, model)
-                    metrics_df = pd.concat([metrics_df, instance_metrics_df])
-                    args.output_path.parent.mkdir(parents=True, exist_ok=True)
-                    if args.reversed:
-                        metrics_df.to_csv(
-                            args.output_path.parent / "metrics_all_rev.csv", index=False
-                        )
-                    else:
-                        metrics_df.to_csv(
-                            args.output_path.parent / "metrics_all.csv", index=False
-                        )
-                except Exception as e:  # noqa: B902
-                    logging.warning("Skipping model %s due to exception %s", mname, e)
-                    break
-
-
 @torch.enable_grad()
 def attack_one_dataloader(
     args: Namespace,
@@ -605,8 +548,8 @@ def attack_one_dataloader(
         dataloader = get_dataset_3DCC(
             model,
             dataloader_name,
-            attack_args["3dcc_corruption"],
-            attack_args["3dcc_intensity"],
+            attack_args["3d_common_corruption_name"],
+            attack_args["3d_common_corruption_severity"],
         )
     metrics_individual = None
     if args.write_individual_metrics:
@@ -645,7 +588,7 @@ def attack_one_dataloader(
             torch.cuda.empty_cache()
 
             if attack_args["targeted"] or attack_args["attack"] == "pcfa":
-                if attack_args["target"] == "negative":
+                if attack_args["attack_target"] == "negative":
                     targeted_flow_tensor = -orig_preds["flows"]
                 else:
                     targeted_flow_tensor = torch.zeros_like(orig_preds["flows"])
@@ -978,7 +921,7 @@ def generate_outputs(
     if args.write_outputs:
         if perturbed_inputs is not None:
             # perturbed_inputs = tensor_dict_to_numpy(perturbed_inputs)
-            _write_to_npy_file(
+            _write_to_file(
                 args,
                 preds,
                 dataloader_name,
@@ -988,10 +931,10 @@ def generate_outputs(
                 attack_args,
             )
         else:
-            _write_to_npy_file(args, preds, dataloader_name, batch_idx, metadata)
+            _write_to_file(args, preds, dataloader_name, batch_idx, metadata)
 
 
-def _write_to_npy_file(
+def _write_to_file(
     args: Namespace,
     preds: Dict[str, torch.Tensor],
     dataloader_name: str,
@@ -1066,79 +1009,6 @@ def _write_to_npy_file(
 
                 cv.imwrite(str(output_filepath), image.astype(np.uint8))
                 cv.imwrite(str(output_filepath2), image2.astype(np.uint8))
-
-
-def _write_to_file(
-    args: Namespace,
-    preds: Dict[str, torch.Tensor],
-    dataloader_name: str,
-    batch_idx: int,
-    metadata: Optional[Dict[str, Any]] = None,
-) -> None:
-    out_root_dir = Path(args.output_path) / dataloader_name
-    # pdb.set_trace()
-    extra_dirs = ""
-    if metadata is not None:
-        img_path = Path(metadata["image_paths"][0][0])
-        image_name = img_path.stem
-        if "sintel" in dataloader_name:
-            seq_name = img_path.parts[-2]
-            extra_dirs = seq_name
-    else:
-        image_name = f"{batch_idx:08d}"
-
-    if args.flow_format != "original":
-        flow_ext = args.flow_format
-    else:
-        if "kitti" in dataloader_name or "hd1k" in dataloader_name:
-            flow_ext = "png"
-        else:
-            flow_ext = "flo"
-
-    for k, v in preds.items():
-        if isinstance(v, np.ndarray):
-            out_dir = out_root_dir / k / extra_dirs
-            out_dir.mkdir(parents=True, exist_ok=True)
-            if k == "flows" or k == "flows_b":
-                flow_utils.flow_write(out_dir / f"{image_name}.{flow_ext}", v)
-            elif len(v.shape) == 2 or (
-                len(v.shape) == 3 and (v.shape[2] == 1 or v.shape[2] == 3)
-            ):
-                if v.max() <= 1:
-                    v = v * 255
-                # pdb.set_trace()
-                cv.imwrite(str(out_dir / f"{image_name}.png"), v.astype(np.uint8))
-
-
-if __name__ == "__main__":
-    parser = _init_parser()
-
-    # TODO: It is ugly that the model has to be gotten from the argv rather than the argparser.
-    # However, I do not see another way, since the argparser requires the model to load some of the args.
-    FlowModel = None
-    if len(sys.argv) > 1 and sys.argv[1] not in ["-h", "--help", "all", "select"]:
-        FlowModel = get_model_reference(sys.argv[1])
-        parser = FlowModel.add_model_specific_args(parser)
-
-    add_datasets_to_parser(parser, "./ptlflow/datasets.yml")
-
-    args = parser.parse_args()
-
-    if args.model not in ["all", "select"]:
-        model_id = args.model
-        if args.pretrained_ckpt is not None:
-            model_id += f"_{Path(args.pretrained_ckpt).stem}"
-        if args.max_forward_side is not None:
-            model_id += f"_maxside{args.max_forward_side}"
-        if args.scale_factor is not None:
-            model_id += f"_scale{args.scale_factor}"
-        args.output_path = Path(args.output_path) / model_id
-        model = get_model(sys.argv[1], args.pretrained_ckpt, args)
-        args.output_path.mkdir(parents=True, exist_ok=True)
-
-        attack(args, model)
-    else:
-        attack_list_of_models(args)
 
 
 def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_model="none", iterations=20, epsilon=8/255, alpha=0.01, lp_norm="inf", retrieve_existing=False, output_path="./output", write_outputs=False, dataset_config_path=None, additional_args=None):
@@ -1259,7 +1129,7 @@ def load_model(model_name, dataset):
     checkpoints = model_ref.pretrained_checkpoints.keys()
     for c in checkpoints:
         if c in dataset:
-            model = get_model(model_ref, c, args)
+            model = get_model(model_ref, c)
             return model
     print(f"No pre-trained model available for {model}/{dataset}.")
     return None
