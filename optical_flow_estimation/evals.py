@@ -1382,10 +1382,9 @@ if __name__ == "__main__":
         attack_list_of_models(args)
 
 
-def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_model="none", iterations=20, epsilon=8/255, alpha=0.01, lp_norm="inf", retrieve_existing=False, output_path="./output", write_outputs=False, dataset_config_path=None, additional_args=None):
+def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_model="none", iterations=20, epsilon=8/255, alpha=0.01, lp_norm="inf", retrieve_existing=False, output_path="./output", write_outputs=False, dataset_config_path=None, adv_weather_args=None, additional_args=None):
     """
     Function to run an attack based on the specified parameters.
-    
     Args:
         model_name (str): The name of the model to attack.
         dataset (str): The dataset on which the model will be attacked.
@@ -1394,7 +1393,9 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
         attack_name (str): Specific attack to use (if applicable).
         write_outputs (bool): Whether to save attack outputs.
         dataset_config (str): Path to the dataset config file (default: "./ptlflow/datasets.yml").
+        adv_weather_args (dict): Additional arguments specific to the adversarial weather attack.
         additional_args (dict): Any additional arguments that would be needed by the attack or model.
+        
     """
 
     # Step 1: Fetch model reference based on the model name
@@ -1403,6 +1404,9 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
     # Step 2: Initialize the parser and add model-specific args
     parser = _init_parser()
     parser = FlowModel.add_model_specific_args(parser)
+
+    if adv_weather_args is None:
+        adv_weather_args = {}
     
     # Create a list of parameters to simulate CLI arguments
     list_of_parameters = [
@@ -1412,8 +1416,14 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
         f"--attack={threat_model}",
         f"--pretrained_ckpt={pretrained_ckpt}",
     ]
+
     if write_outputs:
         list_of_parameters.append("--write_outputs")
+
+    # Add args from the adv_weather_args dictionary
+    if adv_weather_args:
+        for key, value in adv_weather_args.items():
+            list_of_parameters.append(f"--weather_{key}={value}")
 
     # Add additional args from dictionary
     # TODO: remove attack_ from all the args of the parser and from the attack_args_parser.py. 
@@ -1426,7 +1436,7 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
                 else:
                     list_of_parameters.append(f"--key={value}")
             else:
-                list_of_parameters.append(f"--{key}={value}")
+                list_of_parameters.append(f"--{key}={value}")        
 
     # Step 3: Parse the arguments using the parameter list
     args = parser.parse_args(list_of_parameters)
@@ -1471,7 +1481,7 @@ def evaluate(model_name, dataset, pretrained_ckpt, dataset_path=None, threat_mod
     Path(args.output_path).mkdir(parents=True, exist_ok=True)
 
     model = get_model(model_name, pretrained_ckpt, args)
-
+    
     # Run the attack on the specific model
     attack(args, model)
 
