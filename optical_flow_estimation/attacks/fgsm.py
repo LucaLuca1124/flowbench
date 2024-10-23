@@ -66,7 +66,7 @@ def fgsm_attack(
     # import pdb
 
     # pdb.set_trace()
-    if attack_args["norm"] == "two":
+    if attack_args["lp_norm"] == "two":
         sign_data_grad = attack_functions.lp_normalize(
             sign_data_grad, p=2, epsilon=1.0, decrease_only=False
         )
@@ -74,13 +74,13 @@ def fgsm_attack(
         perturbed_image.detach() + attack_args["epsilon"] * sign_data_grad
     )
     # Adding clipping to maintain [0,1] range
-    if attack_args["norm"] == "inf":
+    if attack_args["lp_norm"] == "inf":
         delta = torch.clamp(
             perturbed_image - orig_image,
             min=-1 * attack_args["epsilon"],
             max=attack_args["epsilon"],
         )
-    elif attack_args["norm"] == "two":
+    elif attack_args["lp_norm"] == "two":
         # delta = perturbed_image - orig_image
         # delta_norms = torch.norm(delta.view(batch_size, -1), p=2, dim=1)
         # factor = attack_args["attack_epsilon"] / delta_norms

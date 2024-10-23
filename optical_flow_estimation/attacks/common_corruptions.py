@@ -36,13 +36,13 @@ def common_corrupt(
     # Create corruption on each input image
     image_1_corrupt = corrupt(
         image_1_numpy,
-        corruption_name=attack_args["cc_name"],
-        severity=attack_args["cc_severity"],
+        corruption_name=attack_args["common_corruption_name"],
+        severity=attack_args["common_corruption_severity"],
     )
     image_2_corrupt = corrupt(
         image_2_numpy,
         corruption_name=attack_args["cc_name"],
-        severity=attack_args["cc_severity"],
+        severity=attack_args["common_corruption_severity"],
     )
 
     # Rescale the numpy images to [0, 1] and convert them back to tensors

@@ -3,30 +3,30 @@ from typing import Dict
 
 fgsm_arguments = [
     "attack",
-    "norm",
+    "lp_norm",
     "epsilon",
     "targeted",
-    "target",
+    "attack_target",
     "loss",
-    "optim_target",
+    "optimization_target",
 ]
 bim_pgd_cospgd_arguments = [
     "attack",
-    "norm",
+    "lp_norm",
     "epsilon",
     "alpha",
     "targeted",
-    "target",
+    "attack_target",
     "loss",
     "iterations",
-    "optim",
+    "optimization_target",
 ]
 apgd_arguments = [
     "attack",
-    "norm",
+    "lp_norm",
     "epsilon",
     "targeted",
-    "target",
+    "tattack_target",
     "loss",
     "apgd_rho",
     "apgd_n_restarts",
@@ -37,7 +37,7 @@ apgd_arguments = [
 pcfa_arguments = [
     "attack",
     "targeted",
-    "target",
+    "attack_target",
     "loss",
     "epsilon",
     "alpha",
@@ -90,19 +90,30 @@ weather_arguments = [
 ]
 tdcc_arguments = [
     "attack",
-    "3dcc_corruption",
-    "3dcc_intensity",
+    "3d_common_corruption_name",
+    "3dcommon_corruption_severity",
     "targeted",
 ]
 cc_arguments = [
     "attack",
     "targeted",
-    "cc_name",
-    "cc_severity",
+    "common_corruption_name",
+    "common_corruption_severity",
+]
+attack_arguments = [
+    "attack",
+    "lp_norm",
+    "epsilon",
+    "alpha",
+    "targeted",
+    "attack_target",
+    "loss",
+    "optimization_target",
+    "iterations",
 ]
 no_attack_arguments = ["attack", "targeted"]
-targeted_arguments = ["target"]
-untargeted_arguments = ["optim"]
+targeted_arguments = ["attack_target"]
+untargeted_arguments = ["optimization_target"]
 
 
 class AttackArgumentParser:
@@ -113,12 +124,12 @@ class AttackArgumentParser:
         self.index = 0
         for arg in vars(args):
             if (
-                arg.startswith("attack")
+                arg in attack_arguments
                 or arg.startswith("pcfa")
                 or arg.startswith("apgd")
                 or arg.startswith("weather")
-                or arg.startswith("3dcc")
-                or arg.startswith("cc")
+                or arg.startswith("3d")
+                or arg.startswith("common")
             ):
                 self.attack_args[arg] = list(set(self.to_list(getattr(args, arg))))
         self.number_of_args = len(self.attack_args.keys())

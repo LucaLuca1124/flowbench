@@ -137,7 +137,7 @@ def _init_parser() -> ArgumentParser:
         help="Name of the attack to use.",
     )
     parser.add_argument(
-        "--optim_target",
+        "--optimization_target",
         type=str,
         default="ground_truth",
         nargs="*",
@@ -145,7 +145,7 @@ def _init_parser() -> ArgumentParser:
         help="Set optimization target for adversarial attacks.",
     )
     parser.add_argument(
-        "--cc_name",
+        "--common_corruption_name",
         type=str,
         default="gaussian_noise",
         nargs="*",
@@ -169,7 +169,7 @@ def _init_parser() -> ArgumentParser:
         help="Name of the common corruption to use on the input images.",
     )
     parser.add_argument(
-        "--cc_severity",
+        "--common_corruption_severity",
         type=int,
         default=1,
         nargs="*",
@@ -177,7 +177,7 @@ def _init_parser() -> ArgumentParser:
         help="Severity of the common corruption to use on the input images.",
     )
     parser.add_argument(
-        "--norm",
+        "--lp_norm",
         type=str,
         default=norm,
         nargs="*",
@@ -254,7 +254,7 @@ def _init_parser() -> ArgumentParser:
         help="Set if adversarial attack should be targeted.",
     )
     parser.add_argument(
-        "--target",
+        "--attack_target",
         type=str,
         default="zero",
         nargs="*",
@@ -269,7 +269,7 @@ def _init_parser() -> ArgumentParser:
         help="Set the name of the used loss function (mse, epe)",
     )
     parser.add_argument(
-        "--3dcc_intensity",
+        "--3d_common_corruption_severity",
         type=int,
         choices=[1, 2, 3, 4, 5],
         default=3,
@@ -277,7 +277,7 @@ def _init_parser() -> ArgumentParser:
         help="Set the the intensity of the 3DCC corruption, int between 1 and 5",
     )
     parser.add_argument(
-        "--3dcc_corruption",
+        "--3d_common_corruption_name",
         type=str,
         default="far_focus",
         nargs="*",
@@ -667,8 +667,8 @@ def attack(args: Namespace, model: BaseModel) -> pd.DataFrame:
 
     for attack_args in attack_args_parser:
         for key, value in attack_args.items():
-            if "_" in key:
-                key = key.split("_")[1]
+            # if "_" in key:
+            #     key = key.split("_")[1]
             if isinstance(value, float):
                 value = round(value, 4)
             output_data.append((key, value))
@@ -837,8 +837,8 @@ def attack_one_dataloader(
         dataloader = get_dataset_3DCC(
             model,
             dataloader_name,
-            attack_args["3dcc_corruption"],
-            attack_args["3dcc_intensity"],
+            attack_args["3d_common_corruption_name"],
+            attack_args["3d_common_corruption_severity"],
         )
     metrics_individual = None
     if args.write_individual_metrics:
@@ -882,7 +882,7 @@ def attack_one_dataloader(
                 or attack_args["attack"] == "weather"
             ):
                 
-                if attack_args["target"] == "negative":
+                if attack_args["attack_target"] == "negative":
                     targeted_flow_tensor = -orig_preds["flows"]
                 else:
                     targeted_flow_tensor = torch.zeros_like(orig_preds["flows"])
@@ -1219,7 +1219,7 @@ def generate_outputs(
     if args.write_outputs:
         if perturbed_inputs is not None:
             # perturbed_inputs = tensor_dict_to_numpy(perturbed_inputs)
-            _write_to_npy_file(
+            _write_to_file(
                 args,
                 preds,
                 dataloader_name,
@@ -1229,10 +1229,10 @@ def generate_outputs(
                 attack_args,
             )
         else:
-            _write_to_npy_file(args, preds, dataloader_name, batch_idx, metadata)
+            _write_to_file(args, preds, dataloader_name, batch_idx, metadata)
 
 
-def _write_to_npy_file(
+def _write_to_file(
     args: Namespace,
     preds: Dict[str, torch.Tensor],
     dataloader_name: str,
@@ -1510,7 +1510,7 @@ def load_model(model_name, dataset):
     checkpoints = model_ref.pretrained_checkpoints.keys()
     for c in checkpoints:
         if c in dataset:
-            model = get_model(model_ref, c, args)
+            model = get_model(model_ref, c)
             return model
     print(f"No pre-trained model available for {model}/{dataset}.")
     return None
