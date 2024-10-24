@@ -47,7 +47,7 @@ pcfa_arguments = [
 weather_arguments = [
     "attack",
     "targeted",
-    "target",
+    "attack_target",
     "loss",
     "weather_optimizer",
     "weather_steps",
@@ -186,8 +186,8 @@ class AttackArgumentParser:
         for i in range(0, len(self.argument_lists)):
             entry = self.argument_lists[i]
             attack = entry["attack"]
-            # targeted = entry["targeted"]
-            targeted = entry.get("targeted", False) 
+            targeted = entry["targeted"]
+            # targeted = entry.get("targeted", False) 
             to_remove = dict(entry)
 
             match attack:  # Commit adversarial attack
